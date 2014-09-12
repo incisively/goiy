@@ -3,26 +3,17 @@ package config
 import (
 	"fmt"
 	"launchpad.net/gocheck"
+	"strings"
 	"testing"
 )
 
-type ConfigSuite struct {
-	config []byte
-}
+type ConfigSuite struct{}
 
 var _ = gocheck.Suite(&ConfigSuite{})
 
 func Test(t *testing.T) { gocheck.TestingT(t) }
 
-func (cs *ConfigSuite) SetUpSuite(c *gocheck.C) {
-	cs.config = []byte(`
-test:
-    a: "Some stuff in a string"
-    b: 9001
-`)
-}
-
-func (cs *ConfigSuite) TestDecoderUnmarshals(c *gocheck.C) {
+func (cs *ConfigSuite) TestUnmarshal(c *gocheck.C) {
 	// test Unmarshal works with defined env string
 	var testconf, prodconf Config
 
@@ -48,6 +39,57 @@ func (cs *ConfigSuite) TestDecoderUnmarshals(c *gocheck.C) {
 	var envconf EnvConfig
 
 	err = Unmarshal(jsondata, &envconf, "")
+	c.Assert(err, gocheck.IsNil)
+	c.Check(&envconf, gocheck.DeepEquals, &EnvConfig{
+		Test: Config{
+			A: "some kind of string",
+			B: 100,
+		},
+		Prod: Config{
+			A: "production worthy string",
+			B: 9001,
+		},
+	})
+}
+
+func (cs *ConfigSuite) TestDecoderUnmarshals(c *gocheck.C) {
+	// test Unmarshal works with defined env string
+	var testconf, prodconf Config
+
+	// test decoder fails on unrecognised env
+	reader := strings.NewReader(string(jsondata))
+	dec := NewDecoder(reader)
+	err := dec.Decode(&testconf, "unknown")
+	c.Assert(err, gocheck.Not(gocheck.IsNil))
+	c.Check(err, gocheck.DeepEquals, fmt.Errorf("Cannot find env unknown in config"))
+
+	// test Decoder decodes test config
+	reader = strings.NewReader(string(jsondata))
+	dec = NewDecoder(reader)
+	err = dec.Decode(&testconf, "test")
+	c.Assert(err, gocheck.IsNil)
+	c.Check(&testconf, gocheck.DeepEquals, &Config{
+		A: "some kind of string",
+		B: 100,
+	})
+
+	// test Decoder decodes production config
+	reader = strings.NewReader(string(jsondata))
+	dec = NewDecoder(reader)
+	err = dec.Decode(&prodconf, "production")
+	c.Assert(err, gocheck.IsNil)
+	c.Check(&prodconf, gocheck.DeepEquals, &Config{
+		A: "production worthy string",
+		B: 9001,
+	})
+
+	// test Decoder works for undefined env string
+	var envconf EnvConfig
+
+	// test Decoder decodes entire config on empty env string
+	reader = strings.NewReader(string(jsondata))
+	dec = NewDecoder(reader)
+	err = dec.Decode(&envconf, "")
 	c.Assert(err, gocheck.IsNil)
 	c.Check(&envconf, gocheck.DeepEquals, &EnvConfig{
 		Test: Config{
