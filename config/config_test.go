@@ -23,6 +23,7 @@ test:
 }
 
 func (cs *ConfigSuite) TestDecoderUnmarshals(c *gocheck.C) {
+	// test Unmarshal works with defined env string
 	var testconf, prodconf Config
 
 	err := Unmarshal(jsondata, &testconf, "unknown")
@@ -43,6 +44,22 @@ func (cs *ConfigSuite) TestDecoderUnmarshals(c *gocheck.C) {
 		B: 9001,
 	})
 
+	// test Unmarshal works for undefined env string
+	var envconf EnvConfig
+
+	err = Unmarshal(jsondata, &envconf, "")
+	c.Assert(err, gocheck.IsNil)
+	c.Check(&envconf, gocheck.DeepEquals, &EnvConfig{
+		Test: Config{
+			A: "some kind of string",
+			B: 100,
+		},
+		Prod: Config{
+			A: "production worthy string",
+			B: 9001,
+		},
+	})
+
 }
 
 var jsondata []byte = []byte(`
@@ -57,7 +74,12 @@ var jsondata []byte = []byte(`
 	}
 }`)
 
+type EnvConfig struct {
+	Test Config `json:"test"`
+	Prod Config `json:"production"`
+}
+
 type Config struct {
-	A string `conf:"a"`
-	B int    `conf:"b"`
+	A string `json:"a"`
+	B int    `json:"b"`
 }

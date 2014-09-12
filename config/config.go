@@ -5,7 +5,21 @@ import (
 	"fmt"
 )
 
+// Unmarshal parses out a json configuration file which is aggregated
+// by an environment string. If no env string is provided it unmarshals
+// the entire data []byte in to the provided interface v.
 func Unmarshal(data []byte, v interface{}, env string) (err error) {
+	// if no env string is provided parse as normal json
+	if env == "" {
+		return json.Unmarshal(data, v)
+	}
+	// if env string provided use env lookup approach
+	return unmarshal(data, v, env)
+}
+
+// unmarshal a configuration json file, but only the top level
+// object with the key `env`
+func unmarshal(data []byte, v interface{}, env string) (err error) {
 	// construct a new map of string to json raw message type
 	var envs map[string]json.RawMessage
 
