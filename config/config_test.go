@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"launchpad.net/gocheck"
 	"strings"
 	"testing"
@@ -19,7 +18,7 @@ func (cs *ConfigSuite) TestUnmarshal(c *gocheck.C) {
 
 	err := Unmarshal(jsondata, &testconf, "unknown")
 	c.Assert(err, gocheck.Not(gocheck.IsNil))
-	c.Check(err, gocheck.DeepEquals, fmt.Errorf("Cannot find env unknown in config"))
+	c.Check(err.Error(), gocheck.DeepEquals, "Cannot find env unknown in config")
 
 	err = Unmarshal(jsondata, &testconf, "test")
 	c.Assert(err, gocheck.IsNil)
@@ -61,7 +60,7 @@ func (cs *ConfigSuite) TestDecoderUnmarshals(c *gocheck.C) {
 	dec := NewDecoder(reader)
 	err := dec.Decode(&testconf, "unknown")
 	c.Assert(err, gocheck.Not(gocheck.IsNil))
-	c.Check(err, gocheck.DeepEquals, fmt.Errorf("Cannot find env unknown in config"))
+	c.Check(err.Error(), gocheck.DeepEquals, "Cannot find env unknown in config")
 
 	// test Decoder decodes test config
 	reader = strings.NewReader(string(jsondata))

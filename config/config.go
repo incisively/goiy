@@ -32,7 +32,7 @@ func unmarshal(data []byte, v interface{}, env string) (err error) {
 	// if the environment desired is not present return an error
 	conf, ok := envs[env]
 	if !ok {
-		return fmt.Errorf("Cannot find env %s in config", env)
+		return EnvNotFoundError{env}
 	}
 
 	// unmarshal the data in to the provided interface `v`
@@ -43,16 +43,24 @@ func unmarshal(data []byte, v interface{}, env string) (err error) {
 	return
 }
 
+// Decoder unmarshals config data from an io.Reader
+// into a target struct type
 type Decoder struct {
 	*json.Decoder
 }
 
+// NewDecoder takes an io.Reader to unmarshal
+// and return a pointer to a new Decoder
 func NewDecoder(r io.Reader) *Decoder {
 	return &Decoder{
 		Decoder: json.NewDecoder(r),
 	}
 }
 
+// Decode performs the unmarshaling on the contents of the io.Reader
+// in to the target interface `v` for a given environment `env`.
+// If `env` is the empty string it will parse the entire configuration.
+// Otherwise it will only parse the desired environment object.
 func (dec *Decoder) Decode(v interface{}, env string) error {
 	if env == "" {
 		return dec.Decoder.Decode(v)
@@ -60,6 +68,9 @@ func (dec *Decoder) Decode(v interface{}, env string) error {
 	return dec.decode(v, env)
 }
 
+// decode performs the decoding when `env` is not the empty string.
+// If the env key is not found in the unmarshalled result it will
+// return an error.
 func (dec *Decoder) decode(v interface{}, env string) (err error) {
 	// construct a new map of string to json raw message type
 	var envs map[string]json.RawMessage
@@ -72,7 +83,7 @@ func (dec *Decoder) decode(v interface{}, env string) (err error) {
 	// if the environment desired is not present return an error
 	conf, ok := envs[env]
 	if !ok {
-		return fmt.Errorf("Cannot find env %s in config", env)
+		return EnvNotFoundError{env}
 	}
 
 	// unmarshal the data in to the provided interface `v`
@@ -81,4 +92,15 @@ func (dec *Decoder) decode(v interface{}, env string) (err error) {
 	}
 
 	return
+}
+
+// EnvNotFoundError is returned when an environment requested
+// to be unmarshalled is not found in the provided data.
+type EnvNotFoundError struct {
+	env string
+}
+
+// Error returns a description of the unknown environment.
+func (e EnvNotFoundError) Error() string {
+	return fmt.Sprintf("Cannot find env %s in config", e.env)
 }
