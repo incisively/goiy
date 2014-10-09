@@ -1,5 +1,5 @@
 Database Test Package `db/dbtest`
-===========================
+=================================
 
 The purpose of this package is for common database commands and database interaction mocking.
 
@@ -61,3 +61,44 @@ if didRollback {
 }
 ```
 This will print the line `A rollback occurred!` if a call to `Tx.Rollback()` is made by the `transactionInteractingFunction(...)`.
+
+## Database Interaction Testing
+
+```go
+type TestDatabase struct {
+    db.DB
+    QuoteIdentifier func(string) string
+}
+```
+
+The TestDatabase struct embeds a db.DB implementation and extends it with common test functionality.
+
+---
+
+### `TestDatabase.RollbackTx(func(db.Tx) error) error`
+
+```go
+tdb.RollbackTx(func(tx db.Tx) (err error) {
+    _, err = tx.Exec(“SELECT * FROM foo;”)
+    return
+})
+```
+
+Use this function to call a clojure that requires a database transaction `db.Tx`.
+This function will always result in a call to `db.Tx.Rollback()`.
+
+---
+
+### `TestDatabase.CommitTx(func(db.Tx) error) error`
+
+```go
+tdb.CommitTx(func(tx db.Tx) (err error) {
+    _, err = tx.Exec(“SELECT * FROM foo;”)
+    return
+})
+```
+
+Use this function to call a clojure that requires a database transaction `db.Tx`.
+This function will result in a call to `db.Tx.Rollback()`, when the clojure returns a
+non-nil error. However, if the clojure returns nil, it results in a call to `db.Tx.Commit()`
+
