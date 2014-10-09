@@ -1,4 +1,4 @@
-Database Util Package `util`
+Database Test Package `db/dbtest`
 ===========================
 
 The purpose of this package is for common database commands and database interaction mocking.

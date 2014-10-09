@@ -1,8 +1,10 @@
-package db
+package dbtest
 
 import (
 	"database/sql"
 	"database/sql/driver"
+
+	"github.com/ConvertHQ/goincisively/db"
 )
 
 // MockDB implements DB.
@@ -10,7 +12,7 @@ import (
 // It is composed of fields to be used directly as return
 // values of the functions which match the DB interface.
 type MockDB struct {
-	Beginf           func() (*Tx, error)
+	Beginf           func() (db.Tx, error)
 	Closef           func() error
 	Driverf          func() driver.Driver
 	Execf            func(query string, args ...interface{}) (sql.Result, error)
@@ -22,7 +24,7 @@ type MockDB struct {
 	SetMaxOpenConnsf func(n int)
 }
 
-func (m *MockDB) Begin() (*Tx, error)                                 { return m.Beginf() }
+func (m *MockDB) Begin() (db.Tx, error)                               { return m.Beginf() }
 func (m *MockDB) Close() error                                        { return m.Closef() }
 func (m *MockDB) Driver() driver.Driver                               { return m.Driverf() }
 func (m *MockDB) Exec(q string, a ...interface{}) (sql.Result, error) { return m.Execf(q, a) }
@@ -41,7 +43,7 @@ type MockTx struct {
 	Commitf   func() error
 	Execf     func(query string, args ...interface{}) (sql.Result, error)
 	Preparef  func(query string) (*sql.Stmt, error)
-	Queryf    func(query string, args ...interface{}) sql.Result
+	Queryf    func(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRowf func(query string, args ...interface{}) *sql.Row
 	Rollbackf func() error
 	Stmtf     func(stmt *sql.Stmt) *sql.Stmt
@@ -50,7 +52,7 @@ type MockTx struct {
 func (m *MockTx) Commit() error                                       { return m.Commitf() }
 func (m *MockTx) Exec(q string, a ...interface{}) (sql.Result, error) { return m.Execf(q, a) }
 func (m *MockTx) Prepare(q string) (*sql.Stmt, error)                 { return m.Preparef(q) }
-func (m *MockTx) Query(q string, a ...interface{}) sql.Result         { return m.Queryf(q, a) }
+func (m *MockTx) Query(q string, a ...interface{}) (*sql.Rows, error) { return m.Queryf(q, a) }
 func (m *MockTx) QueryRow(q string, a ...interface{}) *sql.Row        { return m.QueryRowf(q, a) }
 func (m *MockTx) Rollback() error                                     { return m.Rollbackf() }
 func (m *MockTx) Stmt(s *sql.Stmt) *sql.Stmt                          { return m.Stmt(s) }
