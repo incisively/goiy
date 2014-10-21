@@ -6,27 +6,20 @@ import (
 	"io"
 )
 
-// Unmarshal parses out a json configuration file which is aggregated
-// by an environment string. If no env string is provided it unmarshals
-// the entire data []byte in to the provided interface v.
-func Unmarshal(data []byte, v interface{}, env string) error {
-	// if no env string is provided parse as normal json
-	if env == "" {
-		return json.Unmarshal(data, v)
-	}
-	// if env string provided use env lookup approach
-	return unmarshal(data, v, env)
+// Unmarshal wraps json.Unmarshal
+func Unmarshal(data []byte, v interface{}) error {
+	return json.Unmarshal(data, v)
 }
 
-// unmarshal a configuration json file, but only the top level
-// object with the key `env`
-func unmarshal(data []byte, v interface{}, env string) (err error) {
+// Unmarshal parses out a json configuration file which is segmented
+// by an environment string.
+func UnmarshalEnv(data []byte, v interface{}, env string) error {
 	// construct a new map of string to json raw message type
 	var envs map[string]json.RawMessage
 
 	// initially unmarshal environments
-	if err = json.Unmarshal(data, &envs); err != nil {
-		return
+	if err := json.Unmarshal(data, &envs); err != nil {
+		return err
 	}
 
 	// if the environment desired is not present return an error
@@ -36,11 +29,11 @@ func unmarshal(data []byte, v interface{}, env string) (err error) {
 	}
 
 	// unmarshal the data in to the provided interface `v`
-	if err = json.Unmarshal(conf, v); err != nil {
-		return
+	if err := json.Unmarshal(conf, v); err != nil {
+		return err
 	}
 
-	return
+	return nil
 }
 
 // Decoder unmarshals config data from an io.Reader
@@ -59,12 +52,7 @@ func NewDecoder(r io.Reader) *Decoder {
 
 // Decode performs the unmarshaling on the contents of the io.Reader
 // in to the target interface `v` for a given environment `env`.
-// If `env` is the empty string it will parse the entire configuration.
-// Otherwise it will only parse the desired environment object.
-func (dec *Decoder) Decode(v interface{}, env string) error {
-	if env == "" {
-		return dec.Decoder.Decode(v)
-	}
+func (dec *Decoder) DecodeEnv(v interface{}, env string) error {
 	return dec.decode(v, env)
 }
 
@@ -102,5 +90,5 @@ type EnvNotFoundError struct {
 
 // Error returns a description of the unknown environment.
 func (e EnvNotFoundError) Error() string {
-	return fmt.Sprintf("Cannot find env %s in config", e.env)
+	return fmt.Sprintf("Cannot find env '%s' in config", e.env)
 }
