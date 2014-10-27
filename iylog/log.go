@@ -12,10 +12,10 @@ import (
 type Level int
 
 const (
-	ERROR Level = iota
-	WARNING
+	DEBUG Level = 1 << iota
 	INFO
-	DEBUG
+	WARNING
+	ERROR
 )
 
 // String returns the string representation
@@ -63,9 +63,9 @@ func (l *logger) Level() Level { return DEBUG }
 
 var std *Logger = NewLogger(&logger{l: log.New(os.Stderr, "", log.LstdFlags)})
 
-// Loggable interface describes the set of
-// types which can be used for logging within
-// the iylog.Logger
+// Loggable describes the set of type
+// which can be used for logging within
+// the iylog.Logger.
 type Loggable interface {
 	Printf(format string, v ...interface{})
 	Level() Level
@@ -158,7 +158,7 @@ func (m *Logger) printf(level Level, format string, v ...interface{}) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for _, l := range m.loggables {
-		if level <= l.Level() {
+		if level >= l.Level() {
 			l.Printf(fmt.Sprintf("[%s] %s", level, format), v...)
 		}
 	}

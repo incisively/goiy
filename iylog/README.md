@@ -18,14 +18,14 @@ import (
 
 type Logger struct {
     logger *log.Logger
-    level log.Level
+    level  iylog.Level
 }
 
 func NewLogger(out io.Writer, level iylog.Level) *Logger {
     return &Logger{
         logger: log.New(out, "", log.LstdFlags),
         level: level,
-        }
+    }
 }
 
 func (s *Logger) Printf(format string, v ...interface{}) {
@@ -40,9 +40,12 @@ func main() {
     iylog.Add(NewLogger(os.Stdout, iylog.WARNING))
     iylog.Add(NewLogger(os.Stderr, iylog.INFO))
 
-    iylog.Errorf("Something %s %s", "went", "wrong") // => “[ERROR] Something went wrong” to both Stdout and Stderr
-    iylog.Debugf("stuff is happening") // prints nowhere as level is too high
-    iylog.Infof("Some info") // => “[INFO] Some info” to Stderr, but not Stdout
+    // “[ERROR] Something went wrong” to both Stdout and Stderr
+    iylog.Errorf("Something %s %s", "went", "wrong")
+    // prints nowhere as level is too high
+    iylog.Debugf("stuff is happening")
+    // “[INFO] Some info” to Stderr, but not Stdout
+    iylog.Infof("Some info")
 }
 
 ```
