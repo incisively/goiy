@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"regexp"
 	"testing"
 )
 
@@ -166,6 +167,38 @@ func printTo(log func(...interface{}), logln func(...interface{}), logf func(str
 	log(msg)
 	logln(msg)
 	logf("{%s}", msg)
+}
+
+func Test_CapturePanic(t *testing.T) {
+	// set log output to provided buffer
+
+	tl := &testLogger{buf: &bytes.Buffer{}, lvl: ERROR}
+	l := NewLogger(tl)
+
+	defer func() {
+		// check recovered message exists
+		rec := recover()
+		if rec == nil {
+			t.Errorf("Expected panic 'test', got nil")
+		}
+
+		// check it matches original panic string
+		if rec.(string) != "test" {
+			t.Errorf("Expected panic 'test', got '%s'", rec)
+		}
+
+		// ensure correct log message was sent
+		msg := tl.buf.String()
+		exp := ".*\\[ERROR\\] test"
+		if ok, _ := regexp.MatchString(exp, msg); !ok {
+			t.Errorf("Expected match %s, got %s", exp, msg)
+		}
+	}()
+
+	// defer panic capture
+	defer l.CapturePanic()
+	// panic with string 'test'
+	panic("test")
 }
 
 // test_allMethods checks that when a single loggable of a

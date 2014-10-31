@@ -107,6 +107,19 @@ func Add(loggables ...Loggable) {
 	std.Add(loggables...)
 }
 
+// CapturePanic logs panics with a level ERROR
+func (m *Logger) CapturePanic() {
+	if rec := recover(); rec != nil {
+		m.Errorln(rec)
+		panic(rec)
+	}
+}
+
+// CapturePanic calls CapturePanic on std Logger
+func CapturePanic() {
+	std.CapturePanic()
+}
+
 // Errorf prints to all loggers with a level of ERROR or above
 func (m *Logger) Errorf(format string, v ...interface{}) {
 	m.printf(ERROR, format, v...)
