@@ -118,6 +118,29 @@ func Errorf(format string, v ...interface{}) {
 	std.Errorf(format, v...)
 }
 
+// Error prints to all loggers with a level of ERROR or above
+func (m *Logger) Error(v ...interface{}) {
+	m.Errorf(fmt.Sprint(v...))
+}
+
+// Error prints to all loggers registered within the iylog
+// package standard logger, with a level of ERROR or above.
+func Error(v ...interface{}) {
+	std.Error(v...)
+}
+
+// Errorln prints to all loggers with a level of ERROR or above
+func (m *Logger) Errorln(v ...interface{}) {
+	m.Error((append(v, "\n"))...)
+}
+
+// Errorln prints with a line break to all loggers registered
+// within the iylog package standard logger, with a level of
+// ERROR or above.
+func Errorln(v ...interface{}) {
+	std.Errorln(v...)
+}
+
 // Warningf prints to all loggers with a level of WARNING or above
 func (m *Logger) Warningf(format string, v ...interface{}) {
 	m.printf(WARNING, format, v...)
@@ -127,6 +150,29 @@ func (m *Logger) Warningf(format string, v ...interface{}) {
 // package standard logger, with a level of WARNING or above.
 func Warningf(format string, v ...interface{}) {
 	std.Warningf(format, v...)
+}
+
+// Warning prints to all loggers with a level of WARNING or above
+func (m *Logger) Warning(v ...interface{}) {
+	m.Warningf(fmt.Sprint(v...))
+}
+
+// Warning prints to all loggers registered within the iylog
+// package standard logger, with a level of WARNING or above.
+func Warning(v ...interface{}) {
+	std.Warning(v...)
+}
+
+// Warningln prints to all loggers with a level of WARNING or above
+func (m *Logger) Warningln(v ...interface{}) {
+	m.Warning((append(v, "\n"))...)
+}
+
+// Warningln prints with a line break to all loggers registered
+// within the iylog package standard logger, with a level of
+// WARNING or above.
+func Warningln(v ...interface{}) {
+	std.Warningln(v...)
 }
 
 // Infof prints to all loggers with a level of INFO or above
@@ -140,6 +186,29 @@ func Infof(format string, v ...interface{}) {
 	std.Infof(format, v...)
 }
 
+// Info prints to all loggers with a level of INFO or above
+func (m *Logger) Info(v ...interface{}) {
+	m.Infof(fmt.Sprint(v...))
+}
+
+// Info prints to all loggers registered within the iylog
+// package standard logger, with a level of INFO or above.
+func Info(v ...interface{}) {
+	std.Info(v...)
+}
+
+// Infoln prints to all loggers with a level of INFO or above
+func (m *Logger) Infoln(v ...interface{}) {
+	m.Info((append(v, "\n"))...)
+}
+
+// Infoln prints with a line break to all loggers registered
+// within the iylog package standard logger, with a level of
+// INFO or above.
+func Infoln(v ...interface{}) {
+	std.Infoln(v...)
+}
+
 // Debugf prints to all loggers with a level of DEBUG
 func (m *Logger) Debugf(format string, v ...interface{}) {
 	m.printf(DEBUG, format, v...)
@@ -149,6 +218,29 @@ func (m *Logger) Debugf(format string, v ...interface{}) {
 // package standard logger, with a level of DEBUG.
 func Debugf(format string, v ...interface{}) {
 	std.Debugf(format, v...)
+}
+
+// Debug prints to all loggers with a level of DEBUG or above
+func (m *Logger) Debug(v ...interface{}) {
+	m.Debugf(fmt.Sprint(v...))
+}
+
+// Debug prints to all loggers registered within the iylog
+// package standard logger, with a level of DEBUG or above.
+func Debug(v ...interface{}) {
+	std.Debug(v...)
+}
+
+// Debugln prints to all loggers with a level of DEBUG or above
+func (m *Logger) Debugln(v ...interface{}) {
+	m.Debug((append(v, "\n"))...)
+}
+
+// Debugln prints with a line break to all loggers registered
+// within the iylog package standard logger, with a level of
+// DEBUG or above.
+func Debugln(v ...interface{}) {
+	std.Debugln(v...)
 }
 
 // printf performs the printing and formating of levels and messages
