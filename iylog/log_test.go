@@ -106,6 +106,68 @@ func Test_MultipleLoggers(t *testing.T) {
 
 }
 
+func Test_LogFunctionTypes(t *testing.T) {
+	l := NewLogger()
+
+	// set up test logger with an empty buffer
+	tl := &testLogger{buf: &bytes.Buffer{}, lvl: DEBUG}
+	l.Add(tl)
+
+	// print all log function types to buffer
+	printTo(l.Error, l.Errorln, l.Errorf, "a")
+
+	// test all error level functions
+	obt := tl.buf.String()
+	exp := "[ERROR] a[ERROR] a\n[ERROR] {a}"
+	if obt != exp {
+		t.Errorf(expstr, exp, obt)
+	}
+	// reset logger buffer
+	tl.buf.Reset()
+
+	// print all log function types to buffer
+	printTo(l.Warning, l.Warningln, l.Warningf, "a")
+
+	// test all error level functions
+	obt = tl.buf.String()
+	exp = "[WARNING] a[WARNING] a\n[WARNING] {a}"
+	if obt != exp {
+		t.Errorf(expstr, exp, obt)
+	}
+	// reset logger buffer
+	tl.buf.Reset()
+
+	// print all log function types to buffer
+	printTo(l.Info, l.Infoln, l.Infof, "a")
+
+	// test all error level functions
+	obt = tl.buf.String()
+	exp = "[INFO] a[INFO] a\n[INFO] {a}"
+	if obt != exp {
+		t.Errorf(expstr, exp, obt)
+	}
+	// reset logger buffer
+	tl.buf.Reset()
+
+	// print all log function types to buffer
+	printTo(l.Debug, l.Debugln, l.Debugf, "a")
+
+	// test all error level functions
+	obt = tl.buf.String()
+	exp = "[DEBUG] a[DEBUG] a\n[DEBUG] {a}"
+	if obt != exp {
+		t.Errorf(expstr, exp, obt)
+	}
+	// reset logger buffer
+	tl.buf.Reset()
+}
+
+func printTo(log func(...interface{}), logln func(...interface{}), logf func(string, ...interface{}), msg string) {
+	log(msg)
+	logln(msg)
+	logf("{%s}", msg)
+}
+
 // test_allMethods checks that when a single loggable of a
 // fixed level is embedded within a Logger struct, that the
 // correct behaviour occurs when each of the Logger.<Level>f
