@@ -80,7 +80,7 @@ type Loggable interface {
 // A Logger can be used simultaneously from multiple goroutines.
 type Logger struct {
 	loggables []Loggable
-	mu        sync.Mutex
+	mu        sync.RWMutex
 }
 
 // NewLogger returns a ready to use Logger and adds
@@ -260,8 +260,8 @@ func Debugln(v ...interface{}) {
 // to the Loggers set of loggers. It uses a mutex to ensure
 // routine safety.
 func (m *Logger) printf(level Level, format string, v ...interface{}) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	for _, l := range m.loggables {
 		if level >= l.Level() {
 			l.Printf(fmt.Sprintf("[%s] %s", level, format), v...)
