@@ -3,7 +3,6 @@ package iylog
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"reflect"
 	"regexp"
 	"testing"
@@ -11,34 +10,34 @@ import (
 
 var expstr string = "Expected '%s', got '%s'"
 
-func Test_NewLogger(t *testing.T) {
-	l := NewLogger()
+func Test_NewMultiLogger(t *testing.T) {
+	ml := NewMultiLogger()
 
 	// Logger shouldn't contain any loggables
-	x := len(l.loggables)
+	x := len(ml.loggables)
 	if x > 0 {
 		t.Errorf("Expected loggables to be empty, instead found %d loggables", x)
 	}
 
-	lg := &logger{l: log.New(nil, "", log.LstdFlags)}
-	l = NewLogger(lg)
+	l := NewLogger(nil, DEBUG)
+	ml = NewMultiLogger(l)
 
 	// Logger should contain a single loggable
-	x = len(l.loggables)
+	x = len(ml.loggables)
 	if x != 1 {
 		t.Fatalf("Expected length of 1, instead found %d", x)
 	}
 
-	// Logger's single loggable should be the one added in the call to NewLogger `lg`
-	if !reflect.DeepEqual(lg, l.loggables[0]) {
-		t.Errorf("Expected %v, got %v", lg, l.loggables[0])
+	// Logger's single loggable should be the one added in the call to NewMultiLogger `lg`
+	if !reflect.DeepEqual(l, ml.loggables[0]) {
+		t.Errorf("Expected %v, got %v", l, ml.loggables[0])
 	}
 }
 
 func Test_LoggerLevels(t *testing.T) {
 	// test DEBUG logger
 	lg := &testLogger{buf: &bytes.Buffer{}, lvl: DEBUG}
-	l := NewLogger(lg)
+	l := NewMultiLogger(lg)
 
 	// test all logging methods are called correctly
 	test_allMethods(l, lg, true, true, true, true, t)
@@ -59,7 +58,7 @@ func Test_LoggerLevels(t *testing.T) {
 func Test_MultipleLoggers(t *testing.T) {
 	lg1 := &testLogger{buf: &bytes.Buffer{}, lvl: ERROR}
 	lg2 := &testLogger{buf: &bytes.Buffer{}, lvl: WARNING}
-	l := NewLogger(lg1, lg2)
+	l := NewMultiLogger(lg1, lg2)
 
 	// test both loggers are called with correct [ERROR] message
 	test_logger_func(l.Errorf, t, testCase{
@@ -108,7 +107,7 @@ func Test_MultipleLoggers(t *testing.T) {
 }
 
 func Test_LogFunctionTypes(t *testing.T) {
-	l := NewLogger()
+	l := NewMultiLogger()
 
 	// set up test logger with an empty buffer
 	tl := &testLogger{buf: &bytes.Buffer{}, lvl: DEBUG}
@@ -173,7 +172,7 @@ func Test_CapturePanic(t *testing.T) {
 	// set log output to provided buffer
 
 	tl := &testLogger{buf: &bytes.Buffer{}, lvl: ERROR}
-	l := NewLogger(tl)
+	l := NewMultiLogger(tl)
 
 	defer func() {
 		// check recovered message exists
@@ -205,7 +204,7 @@ func Test_CapturePanic(t *testing.T) {
 // fixed level is embedded within a Logger struct, that the
 // correct behaviour occurs when each of the Logger.<Level>f
 // formatted logging functions are called.
-func test_allMethods(l *Logger, lg *testLogger, err, wrn, inf, dbg bool, t *testing.T) {
+func test_allMethods(l *MultiLogger, lg *testLogger, err, wrn, inf, dbg bool, t *testing.T) {
 	// test call to Errorf logs as expected, if at all
 	test_logger_func(l.Errorf, t, testCase{
 		lg:     lg,
