@@ -2,6 +2,7 @@ package iylog
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"sync"
@@ -62,6 +63,19 @@ func NewLogger(logger *log.Logger, level Level) *Logger {
 		logger = log.New(os.Stderr, "", log.LstdFlags)
 	}
 	return &Logger{logger: logger, level: level}
+}
+
+// NewLoggerFromWriter returns a new Logger instance using a standard
+// log.Logger with the provided writer.
+//
+// To create a Logger equivalent to the default Go
+// log.Logger, call NewLogger with a nil logger. NewLoggerFromWriter
+// panics if w is nil.
+func NewLoggerFromWriter(w io.Writer, level Level) *Logger {
+	if w == nil {
+		panic("the io.Writer must not be nil")
+	}
+	return NewLogger(log.New(w, "", log.LstdFlags), level)
 }
 
 func (l *Logger) Printf(format string, v ...interface{}) {
