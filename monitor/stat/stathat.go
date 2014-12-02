@@ -1,7 +1,6 @@
 package stat
 
 import (
-	"log"
 	"time"
 
 	"github.com/e-dard/gev"
@@ -12,8 +11,6 @@ import (
 type StatHat struct {
 	key string `env:"SH_KEY"`
 }
-
-var std Statter = NewStatHat("")
 
 // NewStatHat returns a new StatHat type.
 //
@@ -42,8 +39,7 @@ func NewStatHat(key string) (s StatHat) {
 	return
 }
 
-// Count increments a Stat Hat counter by n. It's threadsafe, and will
-// not make a call if the Stat Hat API key is not present.
+// Count increments stat by n.
 func (s StatHat) Count(stat string, n int) error {
 	if s.key == "" {
 		return nil
@@ -51,8 +47,7 @@ func (s StatHat) Count(stat string, n int) error {
 	return stathat.PostEZCount(stat, s.key, n)
 }
 
-// Measure sends a value to a Stat Hat value. It's threadsafe, and will
-// not make a call if the Stat Hat API key is not present.
+// Measure sends a real-value measure to stathat.
 func (s StatHat) Measure(stat string, v float64) error {
 	if s.key == "" {
 		return nil
@@ -67,21 +62,6 @@ func (s StatHat) Measure(stat string, v float64) error {
 //	defer stat.TimeStat(now, "Timing Something", time.Millisecond)
 func (s StatHat) Time(start time.Time, stat string, dur time.Duration) {
 	tms := time.Since(start) / dur
-	go func() {
-		if err := s.Measure(stat, float64(tms)); err != nil {
-			log.Println(err)
-		}
-	}()
-}
-
-func Count(stat string, n int) error {
-	return std.Count(stat, n)
-}
-
-func Measure(stat string, v float64) error {
-	return std.Measure(stat, v)
-}
-
-func Time(start time.Time, stat string, dur time.Duration) {
-	std.Time(start, stat, dur)
+	// Stathat returns nil for PostEZValue calls anyway
+	s.Measure(stat, float64(tms))
 }
