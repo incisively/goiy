@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 )
 
 // Unmarshal wraps json.Unmarshal
@@ -80,6 +81,22 @@ func (dec *Decoder) decode(v interface{}, env string) (err error) {
 	}
 
 	return
+}
+
+func DecodeFromFileP(pth string, dest interface{}, env string) {
+	// open the file
+	f, err := os.Open(pth)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := NewDecoder(f).DecodeEnv(dest, env); err != nil {
+		panic(err)
+	}
+
+	if err := f.Close(); err != nil {
+		panic(err)
+	}
 }
 
 // EnvNotFoundError is returned when an environment requested

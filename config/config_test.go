@@ -1,6 +1,7 @@
 package config
 
 import (
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -110,6 +111,24 @@ func (cs *ConfigSuite) TestDecoderUnmarshals(c *gocheck.C) {
 		},
 	})
 
+}
+
+func (cs *ConfigSuite) TestDecodeFromFileP(c *gocheck.C) {
+	f, err := ioutil.TempFile("", "")
+	if err != nil {
+		panic(err)
+	}
+
+	if _, err := f.Write(jsondata); err != nil {
+		panic(err)
+	}
+
+	conf := Config{}
+	DecodeFromFileP(f.Name(), &conf, "production")
+	c.Check(conf, gocheck.DeepEquals, Config{
+		A: "production worthy string",
+		B: 9001,
+	})
 }
 
 var jsondata []byte = []byte(`
