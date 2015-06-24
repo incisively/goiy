@@ -129,7 +129,7 @@ func Add(loggables ...Loggable) {
 // CapturePanic logs panics with a level ERROR
 func (m *MultiLogger) CapturePanic() {
 	if rec := recover(); rec != nil {
-		m.Errorln(rec)
+		m.Error(rec)
 		panic(rec)
 	}
 }
@@ -152,25 +152,13 @@ func Errorf(format string, v ...interface{}) {
 
 // Error prints to all loggers with a level of ERROR or above
 func (m *MultiLogger) Error(v ...interface{}) {
-	m.Errorf(fmt.Sprint(v...))
+	m.print(ERROR, v...)
 }
 
 // Error prints to all loggers registered within the iylog
 // package standard logger, with a level of ERROR or above.
 func Error(v ...interface{}) {
 	std.Error(v...)
-}
-
-// Errorln prints to all loggers with a level of ERROR or above
-func (m *MultiLogger) Errorln(v ...interface{}) {
-	m.Error((append(v, "\n"))...)
-}
-
-// Errorln prints with a line break to all loggers registered
-// within the iylog package standard logger, with a level of
-// ERROR or above.
-func Errorln(v ...interface{}) {
-	std.Errorln(v...)
 }
 
 // Warningf prints to all loggers with a level of WARNING or above
@@ -186,25 +174,13 @@ func Warningf(format string, v ...interface{}) {
 
 // Warning prints to all loggers with a level of WARNING or above
 func (m *MultiLogger) Warning(v ...interface{}) {
-	m.Warningf(fmt.Sprint(v...))
+	m.print(WARNING, v...)
 }
 
 // Warning prints to all loggers registered within the iylog
 // package standard logger, with a level of WARNING or above.
 func Warning(v ...interface{}) {
 	std.Warning(v...)
-}
-
-// Warningln prints to all loggers with a level of WARNING or above
-func (m *MultiLogger) Warningln(v ...interface{}) {
-	m.Warning((append(v, "\n"))...)
-}
-
-// Warningln prints with a line break to all loggers registered
-// within the iylog package standard logger, with a level of
-// WARNING or above.
-func Warningln(v ...interface{}) {
-	std.Warningln(v...)
 }
 
 // Infof prints to all loggers with a level of INFO or above
@@ -220,25 +196,13 @@ func Infof(format string, v ...interface{}) {
 
 // Info prints to all loggers with a level of INFO or above
 func (m *MultiLogger) Info(v ...interface{}) {
-	m.Infof(fmt.Sprint(v...))
+	m.print(INFO, v...)
 }
 
 // Info prints to all loggers registered within the iylog
 // package standard logger, with a level of INFO or above.
 func Info(v ...interface{}) {
 	std.Info(v...)
-}
-
-// Infoln prints to all loggers with a level of INFO or above
-func (m *MultiLogger) Infoln(v ...interface{}) {
-	m.Info((append(v, "\n"))...)
-}
-
-// Infoln prints with a line break to all loggers registered
-// within the iylog package standard logger, with a level of
-// INFO or above.
-func Infoln(v ...interface{}) {
-	std.Infoln(v...)
 }
 
 // Debugf prints to all loggers with a level of DEBUG
@@ -254,7 +218,7 @@ func Debugf(format string, v ...interface{}) {
 
 // Debug prints to all loggers with a level of DEBUG or above
 func (m *MultiLogger) Debug(v ...interface{}) {
-	m.Debugf(fmt.Sprint(v...))
+	m.print(DEBUG, v...)
 }
 
 // Debug prints to all loggers registered within the iylog
@@ -263,27 +227,35 @@ func Debug(v ...interface{}) {
 	std.Debug(v...)
 }
 
-// Debugln prints to all loggers with a level of DEBUG or above
-func (m *MultiLogger) Debugln(v ...interface{}) {
-	m.Debug((append(v, "\n"))...)
-}
+// print performs the printing of levels and messages
+// to the Logger's set of loggers.
+func (m *MultiLogger) print(level Level, v ...interface{}) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 
-// Debugln prints with a line break to all loggers registered
-// within the iylog package standard logger, with a level of
-// DEBUG or above.
-func Debugln(v ...interface{}) {
-	std.Debugln(v...)
+	format := fmt.Sprintf("[%s] ", level)
+	for i := 0; i < len(v); i++ {
+		format += "%v"
+		if i < len(v)-1 {
+			format += " "
+		}
+	}
+
+	for _, l := range m.loggables {
+		if level >= l.Level() {
+			l.Printf(format, v...)
+		}
+	}
 }
 
 // printf performs the printing and formatting of levels and messages
-// to the Loggers set of loggers. It uses a mutex to ensure
-// routine safety.
+// to the Loggers set of loggers.
 func (m *MultiLogger) printf(level Level, format string, v ...interface{}) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	for _, l := range m.loggables {
 		if level >= l.Level() {
-			l.Printf(fmt.Sprintf("[%s] %s", level, format), v...)
+			l.Printf(fmt.Sprintf("[%s] ", level)+format, v...)
 		}
 	}
 }

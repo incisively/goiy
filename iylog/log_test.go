@@ -114,11 +114,11 @@ func Test_LogFunctionTypes(t *testing.T) {
 	l.Add(tl)
 
 	// print all log function types to buffer
-	printTo(l.Error, l.Errorln, l.Errorf, "a")
+	printTo(l.Error, l.Errorf, "a")
 
 	// test all error level functions
 	obt := tl.buf.String()
-	exp := "[ERROR] a[ERROR] a\n[ERROR] {a}"
+	exp := "[ERROR] a[ERROR] {a}"
 	if obt != exp {
 		t.Errorf(expstr, exp, obt)
 	}
@@ -126,11 +126,11 @@ func Test_LogFunctionTypes(t *testing.T) {
 	tl.buf.Reset()
 
 	// print all log function types to buffer
-	printTo(l.Warning, l.Warningln, l.Warningf, "a")
+	printTo(l.Warning, l.Warningf, "a")
 
 	// test all error level functions
 	obt = tl.buf.String()
-	exp = "[WARNING] a[WARNING] a\n[WARNING] {a}"
+	exp = "[WARNING] a[WARNING] {a}"
 	if obt != exp {
 		t.Errorf(expstr, exp, obt)
 	}
@@ -138,11 +138,11 @@ func Test_LogFunctionTypes(t *testing.T) {
 	tl.buf.Reset()
 
 	// print all log function types to buffer
-	printTo(l.Info, l.Infoln, l.Infof, "a")
+	printTo(l.Info, l.Infof, "a")
 
 	// test all error level functions
 	obt = tl.buf.String()
-	exp = "[INFO] a[INFO] a\n[INFO] {a}"
+	exp = "[INFO] a[INFO] {a}"
 	if obt != exp {
 		t.Errorf(expstr, exp, obt)
 	}
@@ -150,11 +150,11 @@ func Test_LogFunctionTypes(t *testing.T) {
 	tl.buf.Reset()
 
 	// print all log function types to buffer
-	printTo(l.Debug, l.Debugln, l.Debugf, "a")
+	printTo(l.Debug, l.Debugf, "a")
 
 	// test all error level functions
 	obt = tl.buf.String()
-	exp = "[DEBUG] a[DEBUG] a\n[DEBUG] {a}"
+	exp = "[DEBUG] a[DEBUG] {a}"
 	if obt != exp {
 		t.Errorf(expstr, exp, obt)
 	}
@@ -162,9 +162,8 @@ func Test_LogFunctionTypes(t *testing.T) {
 	tl.buf.Reset()
 }
 
-func printTo(log func(...interface{}), logln func(...interface{}), logf func(string, ...interface{}), msg string) {
+func printTo(log func(...interface{}), logf func(string, ...interface{}), msg string) {
 	log(msg)
-	logln(msg)
 	logf("{%s}", msg)
 }
 
