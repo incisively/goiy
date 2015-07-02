@@ -34,6 +34,12 @@ func NewMockLogger() *MockLogger {
 	return &MockLogger{level: DEBUG}
 }
 
+func (l *MockLogger) Reset() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.messages, l.level, l.i = []Message{}, DEBUG, 0
+}
+
 func (l *MockLogger) Printf(format string, v ...interface{}) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
