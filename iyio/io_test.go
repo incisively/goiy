@@ -2,11 +2,35 @@ package iyio
 
 import (
 	"errors"
+	"fmt"
+	"io"
+	"os"
 	"reflect"
 	"strings"
 
 	"testing"
 )
+
+func ExampleMockReader() {
+	// MockReader makes it simple to force an error from an io.Reader.
+	r := NewMockReader(nil)
+	r.SetReadError(errors.New("a Read error"))
+	_, err := io.Copy(os.Stdout, r)
+	fmt.Println(err)
+
+	fmt.Println()
+
+	// Alternatively you can use it to track calls to Read.
+	r = NewMockReader(strings.NewReader("hello world\n"))
+	fmt.Println(io.Copy(os.Stdout, r))
+	fmt.Printf("MockReader called %d times.", r.ReadCalledN())
+
+	// Output: a Read error
+	//
+	// hello world
+	// 12 <nil>
+	// MockReader called 2 times.
+}
 
 func TestMockReader_Read(t *testing.T) {
 	r := NewMockReader(nil)
@@ -43,6 +67,23 @@ func TestMockReader_SetReadError(t *testing.T) {
 	}
 }
 
+func ExampleMockReadCloser() {
+	// MockReadCloser makes it simple to force an error on Close.
+	r := NewMockReadCloser(nil)
+	r.SetCloseError(errors.New("a Close error"))
+	fmt.Println(r.Close())
+	fmt.Println(r.CloseCalled())
+
+	// MockReadCloser embeds a MockReader, so all that functionality
+	// is available too.
+	r.SetReadError(errors.New("a Read error"))
+	fmt.Println(io.Copy(os.Stdout, r))
+
+	// Output: a Close error
+	// true
+	// 0 a Read error
+}
+
 func TestMockReadCloser_Close(t *testing.T) {
 	r := NewMockReadCloser(nil)
 	expected := errors.New("a Close error")
@@ -55,16 +96,48 @@ func TestMockReadCloser_Close(t *testing.T) {
 	}
 }
 
-func TestMockReadCloser_Closed(t *testing.T) {
+func TestMockReadCloser_CloseCalled(t *testing.T) {
 	r := NewMockReadCloser(nil)
-	if c := r.Closed(); c {
+	if c := r.CloseCalled(); c {
 		t.Errorf("expected %v got %v", false, c)
 	}
 
 	r.Close()
-	if c := r.Closed(); !c {
+	if c := r.CloseCalled(); !c {
 		t.Errorf("expected %v got %v", true, c)
 	}
+}
+
+func ExampleMockWriter() {
+	// MockWriter makes it simple to force an error on Close.
+	var w MockWriter
+
+	w.SetWriteError(errors.New("a Write error"))
+
+	n, err := fmt.Fprint(&w, "foo")
+	fmt.Println(n, err)
+	fmt.Printf("Write was called %d time.\n", w.WriteCalledN())
+
+	fmt.Println()
+
+	// Reset the MockWriter
+	w.Reset()
+	fmt.Printf("Write was called %d times.\n", w.WriteCalledN())
+
+	n, err = fmt.Fprint(&w, "hello world")
+	fmt.Println(n, err)
+
+	fmt.Printf("Write was called %d time.\n", w.WriteCalledN())
+	fmt.Println(string(w.WriteCalledArgs()))
+	// w.WriteCalledArgs() - would panic.
+
+	// Output: 3 a Write error
+	// Write was called 1 time.
+	//
+	// Write was called 0 times.
+	// 11 <nil>
+	// Write was called 1 time.
+	// hello world
 }
 
 func TestMockWriter_Write(t *testing.T) {
@@ -89,7 +162,6 @@ func TestMockWriter_Write(t *testing.T) {
 
 func TestMockWriter_Reset(t *testing.T) {
 	var w MockWriter
-	w.SetWriteN(10)
 	w.SetWriteError(errors.New("error"))
 	w.Write([]byte("foo"))
 	w.WriteCalledArgs()
@@ -136,14 +208,6 @@ func TestMockWriter_WriteCalledN(t *testing.T) {
 
 	if w.WriteCalledN() != 2 {
 		t.Errorf("expected %v got %v", 2, w.WriteCalledN())
-	}
-}
-
-func TestMockWriter_SetWriteN(t *testing.T) {
-	var w MockWriter
-	w.SetWriteN(20)
-	if n, _ := w.Write(nil); n != 20 {
-		t.Errorf("expected %v got %v", 20, n)
 	}
 }
 

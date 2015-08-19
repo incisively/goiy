@@ -1,3 +1,5 @@
+// Package iyio provides convenience mock implementations of io.Readers,
+// io.ReadClosers and io.Writers.
 package iyio
 
 import (
@@ -10,14 +12,17 @@ import (
 // the caller to override the error returned by Read.
 //
 // An underlying io.Reader can optionally be provided, in which case any
-// calls to Read will call Read on the underlying reader.
+// calls to Read will call Read on the underlying reader. In this way,
+// MockReader can be used as a shim, to track calls to Read on the
+// underlying io.Reader.
 //
 // MockReader is safe for use by multiple goroutines.
 type MockReader struct {
 	r io.Reader
 
-	mu        sync.Mutex
-	readError error
+	mu          sync.Mutex
+	readError   error
+	readCalledN int
 }
 
 // NewMockReader returns a new MockReader that will wrap r. It is OK to
@@ -33,6 +38,8 @@ func NewMockReader(r io.Reader) *MockReader {
 func (r *MockReader) Read(b []byte) (n int, err error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.readCalledN++
+
 	if r.r != nil {
 		n, err = r.r.Read(b)
 	}
@@ -41,6 +48,12 @@ func (r *MockReader) Read(b []byte) (n int, err error) {
 		err = r.readError
 	}
 	return n, err
+}
+
+// ReadCalledN returns the number of times Read has been called on
+// the MockReader.
+func (r *MockReader) ReadCalledN() int {
+	return r.readCalledN
 }
 
 // SetReadError sets the error that Read will return.
@@ -85,8 +98,8 @@ func (r *MockReadCloser) SetCloseError(err error) {
 	r.closeError = err
 }
 
-// Closed returns true if Close has been called on the MockReadCloser.
-func (r *MockReadCloser) Closed() bool {
+// CloseCalled returns true if Close has been called.
+func (r *MockReadCloser) CloseCalled() bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return r.closed
@@ -94,7 +107,7 @@ func (r *MockReadCloser) Closed() bool {
 
 // MockWriter provides a mock implementation of an io.Writer.
 //
-// The returned values for the Write method can be set for testing
+// The returned error for the Write method can be set for testing
 // purposes, and each individual call to Write is stored for later
 // inspection.
 //
@@ -104,7 +117,6 @@ type MockWriter struct {
 	writeArgs [][]byte
 	writeI    int
 
-	writeN     int
 	writeError error
 }
 
@@ -114,7 +126,6 @@ func (w *MockWriter) Reset() {
 	defer w.mu.Unlock()
 	w.writeArgs = nil
 	w.writeI = 0
-	w.writeN = 0
 	w.writeError = nil
 }
 
@@ -126,10 +137,10 @@ func (w *MockWriter) Write(p []byte) (n int, err error) {
 	defer w.mu.Unlock()
 	if p != nil {
 		pp = make([]byte, len(p))
-		copy(pp, p)
+		n = copy(pp, p)
 	}
 	w.writeArgs = append(w.writeArgs, pp)
-	return w.writeN, w.writeError
+	return n, w.writeError
 }
 
 // WriteCalledArgs returns, in order, the arguments passed into calls to
@@ -150,13 +161,6 @@ func (w *MockWriter) WriteCalledArgs() []byte {
 // the MockWriter.
 func (w *MockWriter) WriteCalledN() int {
 	return len(w.writeArgs)
-}
-
-// SetWriteN sets the number of bytes returned by Write.
-func (w *MockWriter) SetWriteN(n int) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	w.writeN = n
 }
 
 // SetWriteError sets the error returned by Write.
