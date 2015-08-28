@@ -8,7 +8,30 @@ import (
 	"testing"
 )
 
-var expstr string = "Expected '%s', got '%s'"
+var expFmt = "expected %v, got %v"
+
+func TestLevel_ToLevel(t *testing.T) {
+	examples := []struct {
+		In  string
+		Out Level
+	}{
+		{In: "debug", Out: DEBUG},
+		{In: "DEBUG", Out: DEBUG},
+		{In: "info", Out: INFO},
+		{In: "INFO", Out: INFO},
+		{In: "warning", Out: WARNING},
+		{In: "WARNING", Out: WARNING},
+		{In: "error", Out: ERROR},
+		{In: "ERROR", Out: ERROR},
+	}
+
+	for _, ex := range examples {
+		l := ToLevel(ex.In)
+		if l != ex.Out {
+			t.Errorf(expFmt, ex.Out, l)
+		}
+	}
+}
 
 func Test_NewMultiLogger(t *testing.T) {
 	ml := NewMultiLogger()
@@ -120,7 +143,7 @@ func Test_LogFunctionTypes(t *testing.T) {
 	obt := tl.buf.String()
 	exp := "[ERROR] a[ERROR] {a}"
 	if obt != exp {
-		t.Errorf(expstr, exp, obt)
+		t.Errorf(expFmt, exp, obt)
 	}
 	// reset logger buffer
 	tl.buf.Reset()
@@ -132,7 +155,7 @@ func Test_LogFunctionTypes(t *testing.T) {
 	obt = tl.buf.String()
 	exp = "[WARNING] a[WARNING] {a}"
 	if obt != exp {
-		t.Errorf(expstr, exp, obt)
+		t.Errorf(expFmt, exp, obt)
 	}
 	// reset logger buffer
 	tl.buf.Reset()
@@ -144,7 +167,7 @@ func Test_LogFunctionTypes(t *testing.T) {
 	obt = tl.buf.String()
 	exp = "[INFO] a[INFO] {a}"
 	if obt != exp {
-		t.Errorf(expstr, exp, obt)
+		t.Errorf(expFmt, exp, obt)
 	}
 	// reset logger buffer
 	tl.buf.Reset()
@@ -156,7 +179,7 @@ func Test_LogFunctionTypes(t *testing.T) {
 	obt = tl.buf.String()
 	exp = "[DEBUG] a[DEBUG] {a}"
 	if obt != exp {
-		t.Errorf(expstr, exp, obt)
+		t.Errorf(expFmt, exp, obt)
 	}
 	// reset logger buffer
 	tl.buf.Reset()
@@ -251,7 +274,7 @@ func test_logger_func(logf func(f string, v ...interface{}), t *testing.T, tests
 		if test.called {
 			resp := test.lg.buf.String()
 			if resp != test.msg {
-				t.Errorf(expstr, test.msg, resp)
+				t.Errorf(expFmt, test.msg, resp)
 			}
 		} else {
 			// Loggable should not have been called

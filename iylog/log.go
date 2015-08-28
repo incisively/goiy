@@ -5,11 +5,11 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"sync"
 )
 
-type Level int
-
+// Supported logging levels.
 const (
 	DEBUG Level = 1 << iota
 	INFO
@@ -17,7 +17,10 @@ const (
 	ERROR
 )
 
-var std *MultiLogger = NewMultiLogger()
+var std = NewMultiLogger()
+
+// Level describes a logging level.
+type Level int
 
 func (l Level) String() string {
 	switch l {
@@ -33,8 +36,9 @@ func (l Level) String() string {
 	return "UNKNOWN"
 }
 
-func LevelFromString(level string) Level {
-	switch level {
+// ToLevel converts a string into a Level.
+func ToLevel(l string) Level {
+	switch strings.ToUpper(l) {
 	case "ERROR":
 		return ERROR
 	case "WARNING":
@@ -46,18 +50,22 @@ func LevelFromString(level string) Level {
 	}
 }
 
-// Logger implements the Loggable interface.
-//
-// It turns a log.Logger into something that can be used with a
-// MultiLogger.
+// A Loggable is capable of logging at a specific Level.
+type Loggable interface {
+	Printf(format string, v ...interface{})
+	Level() Level
+}
+
+// Logger implements the Loggable interface. A Logger wraps a
+// log.Logger with a Level.
 type Logger struct {
 	logger *log.Logger
 	level  Level
 }
 
-// NewLogger returns a new Logger instance.
+// NewLogger returns a new Logger.
 //
-// If l is nil, NewLogger uses a log.Logger which writes to os.Stderr
+// If l is nil, NewLogger uses a log.Logger which writes to stderr.
 func NewLogger(logger *log.Logger, level Level) *Logger {
 	if logger == nil {
 		logger = log.New(os.Stderr, "", log.LstdFlags)
@@ -68,31 +76,26 @@ func NewLogger(logger *log.Logger, level Level) *Logger {
 // NewLoggerFromWriter returns a new Logger instance using a standard
 // log.Logger with the provided writer.
 //
-// To create a Logger equivalent to the default Go
-// log.Logger, call NewLogger with a nil logger. NewLoggerFromWriter
-// panics if w is nil.
+// To create a Logger equivalent to Go's log.Logger, call NewLogger
+// with a nil log.Logger.
+//
+// NewLoggerFromWriter panics if w is nil.
 func NewLoggerFromWriter(w io.Writer, level Level) *Logger {
 	if w == nil {
-		panic("the io.Writer must not be nil")
+		panic("io.Writer must not be nil")
 	}
 	return NewLogger(log.New(w, "", log.LstdFlags), level)
 }
 
+// Printf calls Printf on the underlying log.Logger.
 func (l *Logger) Printf(format string, v ...interface{}) {
 	l.logger.Printf(format, v...)
 }
 
+// Level returns the log.Level for the Logger.
 func (l *Logger) Level() Level { return l.level }
 
-// Loggable describes the set of type
-// which can be used for logging within
-// the iylog.Logger.
-type Loggable interface {
-	Printf(format string, v ...interface{})
-	Level() Level
-}
-
-// MultiLogger maintains multiple Loggable objects.
+// MultiLogger wraps multiple Loggable implementations.
 //
 // Each logging operation on a MultiLogger will be passed on to each
 // Loggable object in turn, where it will be logged if the Loggable's
@@ -114,16 +117,29 @@ func NewMultiLogger(loggables ...Loggable) *MultiLogger {
 	return l
 }
 
-// Add adds the loggables to the MultiLogger.
+// Add adds the provided loggables to the MultiLogger.
 func (m *MultiLogger) Add(loggables ...Loggable) {
 	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.loggables = append(m.loggables, loggables...)
-	m.mu.Unlock()
 }
 
 // Add adds the loggables to package-level MultiLogger.
 func Add(loggables ...Loggable) {
 	std.Add(loggables...)
+}
+
+// Reset removes all the registered Loggables from the MultiLogger.
+func (m *MultiLogger) Reset() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.loggables = make([]Loggable, 0)
+}
+
+// Reset removes all registered Loggables on the package-level
+// MultiLogger.
+func Reset() {
+	std.Reset()
 }
 
 // CapturePanic logs panics with a level ERROR
@@ -141,7 +157,7 @@ func CapturePanic() {
 
 // Errorf prints to all loggers with a level of ERROR or above
 func (m *MultiLogger) Errorf(format string, v ...interface{}) {
-	m.printf(ERROR, format, v...)
+	m.prntf(ERROR, format, v...)
 }
 
 // Errorf prints to all loggers registered within the iylog
@@ -163,7 +179,7 @@ func Error(v ...interface{}) {
 
 // Warningf prints to all loggers with a level of WARNING or above
 func (m *MultiLogger) Warningf(format string, v ...interface{}) {
-	m.printf(WARNING, format, v...)
+	m.prntf(WARNING, format, v...)
 }
 
 // Warningf prints to all loggers registered within the iylog
@@ -185,7 +201,7 @@ func Warning(v ...interface{}) {
 
 // Infof prints to all loggers with a level of INFO or above
 func (m *MultiLogger) Infof(format string, v ...interface{}) {
-	m.printf(INFO, format, v...)
+	m.prntf(INFO, format, v...)
 }
 
 // Infof prints to all loggers registered within the iylog
@@ -207,7 +223,7 @@ func Info(v ...interface{}) {
 
 // Debugf prints to all loggers with a level of DEBUG
 func (m *MultiLogger) Debugf(format string, v ...interface{}) {
-	m.printf(DEBUG, format, v...)
+	m.prntf(DEBUG, format, v...)
 }
 
 // Debugf prints to all loggers registered within the iylog
@@ -227,6 +243,14 @@ func Debug(v ...interface{}) {
 	std.Debug(v...)
 }
 
+// prntf performs the printing and formatting of levels and messages
+// to the Loggers set of loggers.
+func (m *MultiLogger) prntf(level Level, format string, v ...interface{}) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	m.print(level, fmt.Sprintf(format, v...))
+}
+
 // print performs the printing of levels and messages
 // to the Logger's set of loggers.
 func (m *MultiLogger) print(level Level, v ...interface{}) {
@@ -244,18 +268,6 @@ func (m *MultiLogger) print(level Level, v ...interface{}) {
 	for _, l := range m.loggables {
 		if level >= l.Level() {
 			l.Printf(format, v...)
-		}
-	}
-}
-
-// printf performs the printing and formatting of levels and messages
-// to the Loggers set of loggers.
-func (m *MultiLogger) printf(level Level, format string, v ...interface{}) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	for _, l := range m.loggables {
-		if level >= l.Level() {
-			l.Printf(fmt.Sprintf("[%s] ", level)+format, v...)
 		}
 	}
 }
