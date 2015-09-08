@@ -31,11 +31,11 @@ func TestDuration_UnmarshalJSON(t *testing.T) {
 			(actualErr != nil && example.ExpectedErr != nil &&
 				actualErr.Error() != example.ExpectedErr.Error()) {
 
-			t.Errorf("example [%d] expected %v, got %v", i+1, example.ExpectedErr, actualErr)
+			t.Errorf("example [%d] got %v, wanted %v", i+1, actualErr, example.ExpectedErr)
 		}
 
 		if d != example.ExpectedDuration {
-			t.Errorf("example [%d] expected %v, got %v", i+1, example.ExpectedDuration, d)
+			t.Errorf("example [%d] got %v, wanted %v", i+1, d, example.ExpectedDuration)
 		}
 	}
 }
@@ -61,11 +61,11 @@ func TestDuration_MarshalJSON(t *testing.T) {
 			(actualErr != nil && example.ExpectedErr != nil &&
 				actualErr.Error() != example.ExpectedErr.Error()) {
 
-			t.Errorf("example [%d] expected %v, got %v", i+1, example.ExpectedErr, actualErr)
+			t.Errorf("example [%d] got %v, wanted %v", i+1, actualErr, example.ExpectedErr)
 		}
 
 		if string(actualByte) != example.ExpectedString {
-			t.Errorf("example [%d] expected %v, got %v", i+1, example.ExpectedString, string(actualByte))
+			t.Errorf("example [%d] got %v, wanted %v", i+1, string(actualByte), example.ExpectedString)
 		}
 	}
 }
@@ -74,7 +74,7 @@ func TestDuration_Hours(t *testing.T) {
 	d := Duration(36000000000000)
 	expected := 10.0
 	if d.Hours() != expected {
-		t.Errorf("expected %v, got %v", expected, d.Hours())
+		t.Errorf("got %v, wanted %v", d.Hours(), expected)
 	}
 }
 
@@ -82,7 +82,7 @@ func TestDuration_Minutes(t *testing.T) {
 	d := Duration(3600000000000)
 	expected := 60.0
 	if d.Minutes() != expected {
-		t.Errorf("expected %v, got %v", expected, d.Minutes())
+		t.Errorf("got %v, wanted %v", d.Minutes(), expected)
 	}
 }
 
@@ -90,7 +90,7 @@ func TestDuration_Nanoseconds(t *testing.T) {
 	d := Duration(36)
 	expected := int64(36)
 	if d.Nanoseconds() != expected {
-		t.Errorf("expected %v, got %v", expected, d.Nanoseconds())
+		t.Errorf("got %v, wanted %v", d.Nanoseconds(), expected)
 	}
 }
 
@@ -98,7 +98,7 @@ func TestDuration_Seconds(t *testing.T) {
 	d := Duration(360000000000)
 	expected := 360.0
 	if d.Seconds() != expected {
-		t.Errorf("expected %v, got %v", expected, d.Seconds())
+		t.Errorf("got %v, wanted %v", d.Seconds(), expected)
 	}
 }
 
@@ -106,6 +106,6 @@ func TestDuration_String(t *testing.T) {
 	d := Duration(3600000)
 	expected := "3.6ms"
 	if d.String() != expected {
-		t.Errorf("expected %q, got %q", expected, d.String())
+		t.Errorf("got %q, wanted %q", d.String(), expected)
 	}
 }
