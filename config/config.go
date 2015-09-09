@@ -83,18 +83,21 @@ func (dec *Decoder) decode(v interface{}, env string) (err error) {
 	return
 }
 
-func DecodeFromFileP(pth string, dest interface{}, env string) {
+func DecodeFromFile(pth string, dest interface{}, env string) error {
 	// open the file
 	f, err := os.Open(pth)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if err := NewDecoder(f).DecodeEnv(dest, env); err != nil {
-		panic(err)
+		return err
 	}
+	return f.Close()
+}
 
-	if err := f.Close(); err != nil {
+func DecodeFromFileP(pth string, dest interface{}, env string) {
+	if err := DecodeFromFile(pth, dest, env); err != nil {
 		panic(err)
 	}
 }
