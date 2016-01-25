@@ -1,4 +1,4 @@
-package config
+package iyconfig
 
 import (
 	"io/ioutil"

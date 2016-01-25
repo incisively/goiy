@@ -1,4 +1,4 @@
-package config
+package iyconfig
 
 import (
 	"encoding/json"
