@@ -7,29 +7,38 @@ import (
 	"os"
 )
 
-// Unmarshal wraps json.Unmarshal
+// Unmarshal wraps json.Unmarshal.
 func Unmarshal(data []byte, v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
-// Unmarshal parses out a json configuration file which is segmented
-// by an environment string.
+// UnmarshalEnv parses a JSON configuration file where multiple
+// environments are specified.
+//
+// Specifically, it expects a file with a layout similar to the
+// following:
+//    {
+//      "production": {},
+//      "dev": {},
+//      "local": {}
+//    }
+//
+// UnmarshalEnv will then use the provided `env` variable to determine
+// which configuration to unmarshal into v.
 func UnmarshalEnv(data []byte, v interface{}, env string) error {
-	// construct a new map of string to json raw message type
 	var envs map[string]json.RawMessage
 
-	// initially unmarshal environments
+	// Initially unmarshal everything into a map of raw JSON messages.
 	if err := json.Unmarshal(data, &envs); err != nil {
 		return err
 	}
 
-	// if the environment desired is not present return an error
 	conf, ok := envs[env]
 	if !ok {
 		return EnvNotFoundError{env}
 	}
 
-	// unmarshal the data in to the provided interface `v`
+	// Unmarshal the data in to the provided interface `v`
 	if err := json.Unmarshal(conf, v); err != nil {
 		return err
 	}
@@ -38,13 +47,12 @@ func UnmarshalEnv(data []byte, v interface{}, env string) error {
 }
 
 // Decoder unmarshals config data from an io.Reader
-// into a target struct type
+// into a target struct type.
 type Decoder struct {
 	*json.Decoder
 }
 
-// NewDecoder takes an io.Reader to unmarshal
-// and return a pointer to a new Decoder
+// NewDecoder initialises a new Decoder from the provided reader.
 func NewDecoder(r io.Reader) *Decoder {
 	return &Decoder{
 		Decoder: json.NewDecoder(r),
@@ -83,6 +91,8 @@ func (dec *Decoder) decode(v interface{}, env string) (err error) {
 	return
 }
 
+// DecodeFromFile unmarshals the env portion of the JSON configuration
+// in the file found at path into dest.
 func DecodeFromFile(pth string, dest interface{}, env string) error {
 	// open the file
 	f, err := os.Open(pth)
@@ -96,6 +106,7 @@ func DecodeFromFile(pth string, dest interface{}, env string) error {
 	return f.Close()
 }
 
+// DecodeFromFileP is like DecodeFromFile but panics on error.
 func DecodeFromFileP(pth string, dest interface{}, env string) {
 	if err := DecodeFromFile(pth, dest, env); err != nil {
 		panic(err)
@@ -108,7 +119,6 @@ type EnvNotFoundError struct {
 	env string
 }
 
-// Error returns a description of the unknown environment.
 func (e EnvNotFoundError) Error() string {
 	return fmt.Sprintf("Cannot find env '%s' in config", e.env)
 }

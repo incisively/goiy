@@ -131,7 +131,7 @@ func (cs *ConfigSuite) TestDecodeFromFileP(c *gocheck.C) {
 	})
 }
 
-var jsondata []byte = []byte(`
+var jsondata = []byte(`
 {
 	"test": {
 		"a": "some kind of string",
